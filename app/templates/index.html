@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Braille Translator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        textarea {
+            width: 95%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            resize: none;
+        }
+        button {
+            display: block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            display: inline-block;
+        }
+        #copy-button {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #copy-button:hover {
+            background-color: #218838;
+        }
+        .output-container {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Braille Translator</h1>
+    <form method="post">
+        <div class="form-group">
+            <label for="text">Enter text to translate to Braille:</label>
+            <textarea class="form-control" id="text" name="text" rows="3"></textarea>
+        </div>
+        <button type="submit">Translate</button>
+    </form>
+    {% if braille_text %}
+    <h2>Braille Translation:</h2>
+    <div class="output-container">
+        <p id="braille-text">{{ braille_text }}</p>
+        <button id="copy-button" style="display: none;">Copy</button>
+    </div>
+    {% endif %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyButton = document.getElementById('copy-button');
+        const brailleTextElement = document.getElementById('braille-text');
+
+        if (brailleTextElement) {
+            copyButton.style.display = 'inline-block'; // Show the button only if braille text exists
+
+            copyButton.addEventListener('click', function() {
+                const brailleText = brailleTextElement.innerText;
+                navigator.clipboard.writeText(brailleText).then(function() {
+                    alert('Braille text copied to clipboard!');
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>
