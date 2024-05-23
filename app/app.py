@@ -1,8 +1,13 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, jsonify
 from gtts import gTTS
 import os
 
 app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+TRANSLATED_FILE = 'translated.txt'
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 # 영어 점자 (소문자, 대문자 구분)
 eng_braille = {
@@ -60,32 +65,42 @@ def translate_to_text(braille):
             i += 1
     return ''.join(text)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
-    braille_text = ''
-    plain_text = ''
-    if request.method == 'POST':
-        if 'text' in request.form:
-            text = request.form['text']
-            braille_text = translate_to_braille(text)
-        elif 'braille' in request.form:
-            braille = request.form['braille']
-            plain_text = translate_to_text(braille)
-    return render_template('index.html', braille_text=braille_text, plain_text=plain_text)
+    return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return 'No file part'
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        text = file.read().decode('utf-8')
-        braille_text = translate_to_braille(text)
-        with open('translated.txt', 'w', encoding='utf-8') as f:
-            f.write(braille_text)
-        return send_file('translated.txt', as_attachment=True)
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify({'file_uploaded': False, 'error': 'No file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'file_uploaded': False, 'error': 'No selected file'}), 400
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(file_path)
+        with open(file_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+        return jsonify({'file_uploaded': True, 'text': text})
+    return render_template('upload.html')
+
+@app.route('/translate-file', methods=['POST'])
+def translate_file():
+    text = request.form['text']
+    braille_text = translate_to_braille(text)
+    with open(TRANSLATED_FILE, 'w', encoding='utf-8') as f:
+        f.write(braille_text)
+    return jsonify({'translated_file': TRANSLATED_FILE})
+
+@app.route('/download/<filename>', methods=['GET'])
+def download(filename):
+    return send_file(filename, as_attachment=True)
+
+@app.route('/delete-translated', methods=['POST'])
+def delete_translated():
+    if os.path.exists(TRANSLATED_FILE):
+        os.remove(TRANSLATED_FILE)
+    return '', 204
 
 @app.route('/tts', methods=['POST'])
 def text_to_speech():
@@ -94,9 +109,17 @@ def text_to_speech():
     tts.save("speech.mp3")
     return send_file("speech.mp3", as_attachment=True)
 
-@app.route('/copy', methods=['POST'])
-def copy_text():
-    return 'Text copied to clipboard!', 200
+@app.route('/translate', methods=['POST'])
+def translate():
+    text = request.form['text']
+    direction = request.form['direction']
+    if direction == 'left-to-right':
+        translated_text = translate_to_braille(text)
+    elif direction == 'right-to-left':
+        translated_text = translate_to_text(text)
+    else:
+        translated_text = text
+    return translated_text
 
 if __name__ == '__main__':
     app.run(debug=True)
