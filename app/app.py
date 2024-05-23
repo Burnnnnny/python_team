@@ -9,7 +9,7 @@ TRANSLATED_FILE = 'translated.txt'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# 영어 점자 (소문자, 대문자 구분)
+# English Braille (lowercase and uppercase)
 eng_braille = {
     'a': '⠁', 'b': '⠃', 'c': '⠉', 'd': '⠙', 'e': '⠑', 'f': '⠋', 'g': '⠛',
     'h': '⠓', 'i': '⠊', 'j': '⠚', 'k': '⠅', 'l': '⠇', 'm': '⠍', 'n': '⠝',
@@ -22,13 +22,13 @@ eng_braille = {
     'Y': '⠠⠽', 'Z': '⠠⠵'
 }
 
-# 숫자 점자
+# Number Braille
 num_braille = {
     '0': '⠼⠚', '1': '⠼⠁', '2': '⠼⠃', '3': '⠼⠉', '4': '⠼⠙', '5': '⠼⠑',
     '6': '⠼⠋', '7': '⠼⠛', '8': '⠼⠓', '9': '⠼⠊'
 }
 
-# 문장 부호
+# Punctuation Braille
 pun_mark = {
     '.': '⠲', ',': '⠂', ';': '⠆', ':': '⠐⠂', '?': '⠦', '!': '⠖',
     '(': '⠦⠄', ')': '⠠⠴', "'": '⠄', '"': '⠶', '-': '⠤', '/': '⠌',
@@ -36,7 +36,62 @@ pun_mark = {
     ' ': '⠀'
 }
 
-def translate_to_braille(text):
+# Korean Braille Dictionaries
+han_con_ini = {
+    'ㄱ': '⠈', 'ㄴ': '⠉', 'ㄷ': '⠊', 'ㄹ': '⠐', 'ㅁ': '⠑',
+    'ㅂ': '⠘', 'ㅅ': '⠠', 'ㅈ': '⠨', 'ㅊ': '⠰', 'ㅋ': '⠋',
+    'ㅌ': '⠓', 'ㅍ': '⠙', 'ㅎ': '⠚', 'ㄲ': '⠠⠈', 'ㄸ': '⠠⠊',
+    'ㅃ': '⠠⠘', 'ㅆ': '⠠⠠', 'ㅉ': '⠠⠨'
+}
+
+han_con_fin = {
+    'ㄱ': '⠁', 'ㄴ': '⠒', 'ㄷ': '⠔', 'ㄹ': '⠂', 'ㅁ': '⠢', 'ㅂ': '⠃',
+    'ㅅ': '⠄', 'ㅇ': '⠶', 'ㅈ': '⠅', 'ㅊ': '⠆', 'ㅋ': '⠖', 'ㅍ': '⠲',
+    'ㅎ': '⠴', 'ㄲ': '⠠⠁', 'ㄸ': '⠠⠔', 'ㅃ': '⠠⠃', 'ㅆ': '⠌', 'ㅉ': '⠠⠅'
+}
+
+han_gat = {
+    'ㅏ': '⠣', 'ㅑ': '⠜', 'ㅓ': '⠎', 'ㅕ': '⠱', 'ㅗ': '⠥', 'ㅛ': '⠬',
+    'ㅜ': '⠍', 'ㅠ': '⠩', 'ㅡ': '⠪', 'ㅣ': '⠕', 'ㅐ': '⠗', 'ㅔ': '⠝',
+    'ㅚ': '⠽', 'ㅝ': '⠏', 'ㅢ': '⠺', 'ㅖ': '⠌', 'ㅟ': '⠍⠗', 'ㅒ': '⠜⠗',
+    'ㅙ': '⠧⠗', 'ㅞ': '⠏⠗'
+}
+
+# Function to decompose Hangul syllables into its components
+def decompose_hangul(c):
+    if '가' <= c <= '힣':
+        base = ord('가')
+        cho_base = 588
+        jung_base = 28
+
+        cho = (ord(c) - base) // cho_base
+        jung = ((ord(c) - base) - (cho * cho_base)) // jung_base
+        jong = (ord(c) - base) - (cho * cho_base) - (jung * jung_base)
+
+        return _cho[cho], _jung[jung], _jong[jong]
+    else:
+        return c, '', ''
+
+_cho  = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"
+_jung = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
+_jong = " ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ"
+
+def translate_korean_to_braille(text):
+    braille_text = []
+    for char in text:
+        if char in han_gat:
+            braille_text.append(han_gat[char])
+        else:
+            cho, jung, jong = decompose_hangul(char)
+            if cho in han_con_ini:
+                braille_text.append(han_con_ini[cho])
+            if jung in han_gat:
+                braille_text.append(han_gat[jung])
+            if jong.strip() in han_con_fin:
+                braille_text.append(han_con_fin[jong.strip()])
+    return ''.join(braille_text)
+
+def translate_english_to_braille(text):
     braille_text = []
     for char in text:
         if char in eng_braille:
@@ -48,6 +103,12 @@ def translate_to_braille(text):
         else:
             braille_text.append(char)
     return ''.join(braille_text)
+
+def translate_to_braille(text):
+    if all('가' <= char <= '힣' for char in text if char.isalpha()):
+        return translate_korean_to_braille(text)
+    else:
+        return translate_english_to_braille(text)
 
 def translate_to_text(braille):
     text = []

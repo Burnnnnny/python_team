@@ -107,6 +107,9 @@
             background-color: #059669;
             transform: translateY(-3px);
         }
+        .language-select {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +119,13 @@
             <h2>Text</h2>
             <form id="text-form" method="post">
                 <textarea id="left-textarea" name="text" placeholder="Enter text to translate..."></textarea>
+                <div class="language-select">
+                    <label for="language">Select Language: </label>
+                    <select id="language">
+                        <option value="english">English</option>
+                        <option value="korean">Korean</option>
+                    </select>
+                </div>
                 <button type="button" id="translate-button"><i class="fas fa-language icon"></i> Translate to Braille</button>
                 <button type="button" class="icon-button" id="tts-button"><i class="fas fa-volume-up icon"></i> Listen</button>
             </form>
@@ -138,6 +148,7 @@
 <script>
     document.getElementById('translate-button').addEventListener('click', function() {
         const leftText = document.getElementById('left-textarea').value;
+        const language = document.getElementById('language').value;
 
         if (leftText.trim() !== "") {
             fetch('/translate', {
@@ -145,7 +156,7 @@
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `text=${encodeURIComponent(leftText)}&direction=left-to-right`,
+                body: `text=${encodeURIComponent(leftText)}&direction=left-to-right&language=${language}`,
             }).then(response => response.text())
             .then(data => {
                 document.getElementById('right-textarea').value = data;
@@ -158,6 +169,7 @@
 
     document.getElementById('translate-to-text-button').addEventListener('click', function() {
         const rightText = document.getElementById('right-textarea').value;
+        const language = document.getElementById('language').value;
 
         if (rightText.trim() !== "") {
             fetch('/translate', {
@@ -165,7 +177,7 @@
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `text=${encodeURIComponent(rightText)}&direction=right-to-left`,
+                body: `text=${encodeURIComponent(rightText)}&direction=right-to-left&language=${language}`,
             }).then(response => response.text())
             .then(data => {
                 document.getElementById('left-textarea').value = data;
