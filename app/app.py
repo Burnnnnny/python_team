@@ -92,8 +92,11 @@ def translate_korean_to_braille(text):
         else:
             cho, jung, jong = decompose_hangul(char)
             if cho in han_con_ini:
-                braille_text.append(han_con_ini[cho])
-            if jung in han_gat:
+                if cho == 'ㅇ' and jung != 'ㅏ' and jung != 'ㅐ':  # First consonant 'ㅇ' with vowel
+                    braille_text.append(han_gat[jung])
+                else:
+                    braille_text.append(han_con_ini[cho])
+            if jung in han_gat and (cho != 'ㅇ' or jung in ['ㅏ', 'ㅐ']):  # Add vowel unless it's handled above
                 braille_text.append(han_gat[jung])
             if jong.strip() in han_con_fin:
                 braille_text.append(han_con_fin[jong.strip()])
@@ -258,4 +261,4 @@ def translate():
     return translated_text
 
 if __name__ == '__main__':
-    app.run(debug=True, port=30000)
+    app.run(host='0.0.0.0',debug=True, port=30000)

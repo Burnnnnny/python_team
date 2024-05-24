@@ -20,32 +20,20 @@ python 팀플 과제
 
 
 써보고 싶으시면 
+
 ```
 git clone https://github.com/Burnnnnny/python_team.git
-```
-<br>
-
-```
 cd python_team
-```
-
-<br>
-
-```
 pip install -r requirements.txt
-```
-
-<br>
-
-```
 cd app
-```
-
-<br>
-
-```
 python3 app.py
+
 ```
 
-도커파일,도커컴포즈도 추가 예정입니다.
+혹은 
+```
+git clone https://github.com/Burnnnnny/python_team.git
+cd python_team
+docker compose up
+```
 써보시고 버그나 에러 등등 피드백 환영입니다. 추가 기능 넣고 싶으신거 있으시면 카톡 주세요
