@@ -49,7 +49,7 @@ han_gat = {
     'ㅏ': '⠣', 'ㅑ': '⠜', 'ㅓ': '⠎', 'ㅕ': '⠱', 'ㅗ': '⠥', 'ㅛ': '⠬',
     'ㅜ': '⠍', 'ㅠ': '⠩', 'ㅡ': '⠪', 'ㅣ': '⠕', 'ㅐ': '⠗', 'ㅔ': '⠝',
     'ㅚ': '⠽', 'ㅝ': '⠏', 'ㅢ': '⠺', 'ㅖ': '⠌', 'ㅟ': '⠍⠗', 'ㅒ': '⠜⠗',
-    'ㅙ': '⠧⠗', 'ㅞ': '⠏⠗'
+    'ㅙ': '⠧⠗', 'ㅞ': '⠏⠗', 'ㅘ': '⠧'
 }
 
 han_abb = {
@@ -86,11 +86,11 @@ def translate_korean_to_braille(text):
             cho, jung, jong = decompose_hangul(char)
             if cho in han_con_ini:
                 if cho == 'ㅇ' and jung != 'ㅏ' and jung != 'ㅐ':
-                    braille_text.append(han_gat[jung])
+                    braille_text.append(han_gat.get(jung, '?'))
                 else:
                     braille_text.append(han_con_ini[cho])
             if jung in han_gat and (cho != 'ㅇ' or jung in ['ㅏ', 'ㅐ']):
-                braille_text.append(han_gat[jung])
+                braille_text.append(han_gat.get(jung, '?'))
             if jong.strip() in han_con_fin:
                 braille_text.append(han_con_fin[jong.strip()])
         if char in pun_mark:
@@ -120,48 +120,48 @@ def translate_to_braille(text):
     else:
         return translate_english_to_braille(text)
 
-def compose_hangul(decomposed):
-    cho, jung, jong = decomposed
-    cho_idx = _cho.index(cho)
-    jung_idx = _jung.index(jung)
-    jong_idx = _jong.index(jong)
-    return chr(0xAC00 + (cho_idx * 21 + jung_idx) * 28 + jong_idx)
+# def compose_hangul(decomposed):
+#     cho, jung, jong = decomposed
+#     cho_idx = _cho.index(cho)
+#     jung_idx = _jung.index(jung)
+#     jong_idx = _jong.index(jong)
+#     return chr(0xAC00 + (cho_idx * 21 + jung_idx) * 28 + jong_idx)
 
-def translate_braille_to_korean(braille):
-    reverse_han_con_ini = {v: k for k, v in han_con_ini.items()}
-    reverse_han_gat = {v: k for k, v in han_gat.items()}
-    reverse_han_con_fin = {v: k for k, v in han_con_fin.items()}
-    reverse_han_abb = {v: k for k, v in han_abb.items()}
-    reverse_pun_mark = {v: k for k, v in pun_mark.items()}
+# def translate_braille_to_korean(braille):
+#     reverse_han_con_ini = {v: k for k, v in han_con_ini.items()}
+#     reverse_han_gat = {v: k for k, v in han_gat.items()}
+#     reverse_han_con_fin = {v: k for k, v in han_con_fin.items()}
+#     reverse_han_abb = {v: k for k, v in han_abb.items()}
+#     reverse_pun_mark = {v: k for k, v in pun_mark.items()}
 
-    text = []
-    i = 0
-    while i < len(braille):
-        if braille[i:i+2] in reverse_han_abb:
-            text.append(reverse_han_abb[braille[i:i+2]])
-            i += 2
-        elif braille[i] in reverse_han_con_ini:
-            cho = reverse_han_con_ini[braille[i]]
-            i += 1
-            jung = ''
-            jong = ''
-            if i < len(braille) and braille[i] in reverse_han_gat:
-                jung = reverse_han_gat[braille[i]]
-                i += 1
-            if i < len(braille) and braille[i] in reverse_han_con_fin:
-                jong = reverse_han_con_fin[braille[i]]
-                i += 1
-            if jung:
-                text.append(compose_hangul([cho, jung, jong]))
-            else:
-                text.append(cho)
-        elif braille[i] in reverse_pun_mark:
-            text.append(reverse_pun_mark[braille[i]])
-            i += 1
-        else:
-            text.append(braille[i])
-            i += 1
-    return ''.join(text)
+#     text = []
+#     i = 0
+#     while i < len(braille):
+#         if braille[i:i+2] in reverse_han_abb:
+#             text.append(reverse_han_abb[braille[i:i+2]])
+#             i += 2
+#         elif braille[i] in reverse_han_con_ini:
+#             cho = reverse_han_con_ini[braille[i]]
+#             i += 1
+#             jung = ''
+#             jong = ''
+#             if i < len(braille) and braille[i] in reverse_han_gat:
+#                 jung = reverse_han_gat[braille[i]]
+#                 i += 1
+#             if i < len(braille) and braille[i] in reverse_han_con_fin:
+#                 jong = reverse_han_con_fin[braille[i]]
+#                 i += 1
+#             if jung:
+#                 text.append(compose_hangul([cho, jung, jong]))
+#             else:
+#                 text.append(cho)
+#         elif braille[i] in reverse_pun_mark:
+#             text.append(reverse_pun_mark[braille[i]])
+#             i += 1
+#         else:
+#             text.append(braille[i])
+#             i += 1
+#     return ''.join(text)
 
 def translate_braille_to_english(braille):
     reverse_eng_braille = {v: k for k, v in eng_braille.items()}
@@ -190,7 +190,9 @@ def translate_braille_to_english(braille):
 
 def translate_braille_to_text(braille, language):
     if language == 'korean':
-        return translate_braille_to_korean(braille)
+        # Translation from Braille to Korean is disabled due to bugs. Under revision.
+        # return translate_braille_to_korean(braille)
+        return "Korean Braille translation is currently under revision due to bugs."
     elif language == 'english':
         return translate_braille_to_english(braille)
     else:

@@ -102,6 +102,10 @@
             background-color: #c0392b;
             transform: translateY(-3px);
         }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -117,10 +121,25 @@
         <button class="btn-translate" id="translate-button"><i class="fas fa-language icon"></i> Translate</button>
         <a id="download-button" href="#"><i class="fas fa-download icon"></i> Download Translated File</a>
         <a href="/" class="btn-back"><i class="fas fa-arrow-left icon"></i> Back to Home</a>
+        <div id="error-message" class="error-message"></div>
     </div>
 </div>
 <script>
     document.getElementById('file').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = '';
+
+        if (file.size > 10 * 1024 * 1024) {
+            errorMessage.textContent = 'File size exceeds the 10MB limit.';
+            return;
+        }
+
+        if (!file.name.endsWith('.txt')) {
+            errorMessage.textContent = 'Unsupported file type. Only .txt files are allowed.';
+            return;
+        }
+
         const formData = new FormData(document.getElementById('upload-form'));
 
         fetch('/upload', {
@@ -137,7 +156,7 @@
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: `text=${encodeURIComponent(data.text)}`,
+                        body: `text=${encodeURIComponent(data.text)}&filename=${encodeURIComponent(data.filename)}`,
                     }).then(response => response.json())
                     .then(data => {
                         if (data.translated_file) {

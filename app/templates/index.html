@@ -108,6 +108,19 @@
             background-color: #059669;
             transform: translateY(-3px);
         }
+        .recording {
+            color: red;
+        }
+        .voice-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .download-button {
+            margin-top: 20px;
+            background-color: #34d399;
+        }
     </style>
 </head>
 <body>
@@ -119,6 +132,11 @@
                 <textarea id="left-textarea" name="text" placeholder="Enter text to translate..."></textarea>
                 <button type="button" id="translate-button"><i class="fas fa-language icon"></i> Translate to Braille</button>
                 <button type="button" class="icon-button" id="tts-button"><i class="fas fa-volume-up icon"></i> Listen</button>
+                <div class="voice-buttons">
+                    <button type="button" class="icon-button" id="voice-rec-button-ko"><i class="fas fa-microphone icon"></i> Korean Voice Input</button>
+                    <button type="button" class="icon-button" id="voice-rec-button-en"><i class="fas fa-microphone icon"></i> English Voice Input</button>
+                </div>
+                <span id="recording-indicator" class="recording" style="display: none;">Recording...</span>
             </form>
         </div>
         <div class="section">
@@ -126,12 +144,12 @@
             <textarea id="right-textarea" name="braille" placeholder="Enter braille to translate..."></textarea>
             <button type="button" id="translate-to-text-button"><i class="fas fa-language icon"></i> Translate to Text</button>
             <select id="language-select">
-                <option value="korean">Korean</option>
                 <option value="english">English</option>
+                <option value="korean">Korean</option>
             </select>
             <div>
                 <button class="icon-button" id="copy-button"><i class="fas fa-copy icon"></i> Copy</button>
-                <button class="icon-button" id="download-button" style="display:none;"><i class="fas fa-download icon"></i> Download</button>
+                <button type="button" class="icon-button" id="download-button"><i class="fas fa-download icon"></i> Download Braille</button>
             </div>
         </div>
     </div>
@@ -154,7 +172,6 @@
             }).then(response => response.text())
             .then(data => {
                 document.getElementById('right-textarea').value = data;
-                document.getElementById('download-button').style.display = 'inline-block';
             }).catch(error => console.error('Error:', error));
         } else {
             alert("Please enter text to translate.");
@@ -199,26 +216,64 @@
     });
 
     document.getElementById('download-button').addEventListener('click', function() {
-        const text = document.getElementById('right-textarea').value;
-        fetch('/download', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `text=${encodeURIComponent(text)}`,
-        }).then(response => response.blob())
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = 'translated.txt';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            // Delete the translated file on the server
-            fetch('/delete-translated', { method: 'POST' });
-        }).catch(error => console.error('Error:', error));
+        const brailleText = document.getElementById('right-textarea').value;
+        const blob = new Blob([brailleText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'braille.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // Voice Recognition
+    function startVoiceRecognition(lang) {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = lang;
+        const recordingIndicator = document.getElementById('recording-indicator');
+
+        recognition.start();
+        recordingIndicator.style.display = 'inline';
+
+        recognition.onstart = function() {
+            document.getElementById('left-textarea').value = '';  // 새로운 녹음 시작 시 텍스트 초기화
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('left-textarea').value += transcript;
+
+            // 실시간으로 점자 생성
+            fetch('/translate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `text=${encodeURIComponent(document.getElementById('left-textarea').value)}&direction=left-to-right`,
+            }).then(response => response.text())
+            .then(data => {
+                document.getElementById('right-textarea').value = data;
+            }).catch(error => console.error('Error:', error));
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Error occurred in recognition: ' + event.error);
+            recordingIndicator.style.display = 'none';
+        };
+
+        recognition.onend = function() {
+            recordingIndicator.style.display = 'none';
+        };
+    }
+
+    document.getElementById('voice-rec-button-ko').addEventListener('click', function() {
+        startVoiceRecognition('ko-KR');
+    });
+
+    document.getElementById('voice-rec-button-en').addEventListener('click', function() {
+        startVoiceRecognition('en-US');
     });
 </script>
 </body>
