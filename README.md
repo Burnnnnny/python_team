@@ -13,11 +13,10 @@
 ### 이미지
 
 현재 버전 기본인덱스 이미지 입니다.
-![alt text](image.png)
+![alt text](index.png)
 <br>
 /upload 이미지입니다.
-
-![alt text](image-1.png)
+![alt text](upload.png)
 
 <br>
 써보고 싶으시면 
