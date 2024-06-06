@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, send_file, jsonify
 import os
 import threading
 import time
-from utils import save_file, read_file, delete_file, generate_tts
+from utils import save_file, read_file, generate_tts
 from braille_translator import translate_to_braille, translate_braille_to_text
 
 app = Flask(__name__)

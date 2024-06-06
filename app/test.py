@@ -1,3 +1,4 @@
+import re
 
 # Configuration constants and dictionaries
 
@@ -104,18 +105,27 @@ def translate_korean_to_braille(text):
 
 def translate_english_to_braille(text):
     braille_text = []
+    is_english = False
     for char in text:
         if 'a' <= char <= 'z' or 'A' <= char <= 'Z':
+            if not is_english:
+                braille_text.append('⠠')  # English start marker
+                is_english = True
             braille_text.append(eng_braille.get(char, char))
         elif '0' <= char <= '9':
             braille_text.append(num_braille.get(char, char))
         elif char in pun_mark:
             braille_text.append(pun_mark[char])
         else:
+            if is_english:
+                braille_text.append('⠼')  # English end marker
+                is_english = False
             braille_text.append(char)
+    if is_english:
+        braille_text.append('⠼')  # Close English block if still open
     return ''.join(braille_text)
 
-def translate_to_braille(text):
+def translate_mixed_to_braille(text):
     braille_text = []
     i = 0
     while i < len(text):
@@ -145,17 +155,26 @@ def translate_braille_to_english(braille):
 
     text = []
     i = 0
+    is_english = False
     while i < len(braille):
-        if braille[i] == '⠼':  # Number indicator
+        if braille[i:i+2] == '⠠':
+            is_english = True
             i += 1
-            while i < len(braille) and braille[i] in reverse_num_braille:
-                text.append(reverse_num_braille[braille[i]])
+        elif braille[i:i+2] == '⠼':
+            is_english = False
+            i += 1
+        elif is_english:
+            if braille[i:i+2] in reverse_eng_braille:
+                text.append(reverse_eng_braille[braille[i:i+2]])
+                i += 2
+            elif braille[i] in reverse_eng_braille:
+                text.append(reverse_eng_braille[braille[i]])
                 i += 1
-        elif braille[i:i+2] in reverse_eng_braille:
-            text.append(reverse_eng_braille[braille[i:i+2]])
-            i += 2
-        elif braille[i] in reverse_eng_braille:
-            text.append(reverse_eng_braille[braille[i]])
+            else:
+                text.append(braille[i])
+                i += 1
+        elif braille[i] in reverse_num_braille:
+            text.append(reverse_num_braille[braille[i]])
             i += 1
         elif braille[i] in reverse_pun_mark:
             text.append(reverse_pun_mark[braille[i]])
@@ -170,3 +189,11 @@ def translate_braille_to_text(braille, language):
         return translate_braille_to_english(braille)
     else:
         return braille
+
+# Sample text for testing
+text = "안녕하세요 hello 1234."
+braille = translate_mixed_to_braille(text)
+print("Original Text:", text)
+print("Braille:", braille)
+print("Back to Text:", translate_braille_to_text(braille, 'english'))
+
