@@ -201,8 +201,20 @@
     document.getElementById('tts-button').addEventListener('click', function() {
         const text = document.getElementById('left-textarea').value;
         if (text.trim() !== "") {
-            const utterance = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(utterance);
+            fetch('/tts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `text=${encodeURIComponent(text)}`,
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.play();
+            })
+            .catch(error => console.error('Error:', error));
         } else {
             alert("Please enter text to listen.");
         }
